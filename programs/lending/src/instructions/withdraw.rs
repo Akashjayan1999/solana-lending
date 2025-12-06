@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{ self, Mint, TokenAccount, TokenInterface, TransferChecked };
 use crate::state::*;
 use crate::error::ErrorCode;
-
+use super::calculate_accrued_interest;
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
     #[account(mut)]
@@ -58,9 +58,22 @@ pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
         deposited_value = user.deposited_sol;
     }
 
-    if amount > deposited_value {
+       
+    // if amount > deposited_value {
+    //     return Err(ErrorCode::InsufficientFunds.into());
+    // }
+     // let time_diff = user.last_updated - Clock::get()?.unix_timestamp;
+    let bank = &mut ctx.accounts.bank;
+    bank.total_deposits = calculate_accrued_interest(bank.total_deposits, bank.interest_rate, user.last_updated)?;
+
+    let value_per_share = bank.total_deposits / bank.total_deposit_shares;
+
+    let user_value = deposited_value as f64 * value_per_share as f64;
+
+    if user_value < amount as f64{
         return Err(ErrorCode::InsufficientFunds.into());
     }
+
 
     let transfer_cpi_accounts = TransferChecked {
         from: ctx.accounts.bank_token_account.to_account_info(),
@@ -84,7 +97,7 @@ pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
 
     token_interface::transfer_checked(cpi_ctx, amount, decimals)?;
 
-    let bank = &mut ctx.accounts.bank;
+    // let bank = &mut ctx.accounts.bank;
     let shares_to_remove = (amount as f64 / bank.total_deposits as f64) * bank.total_deposit_shares as f64;
 
     let user = &mut ctx.accounts.user_account;

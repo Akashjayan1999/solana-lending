@@ -132,7 +132,7 @@ pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         let deposit_ratio = amount
             .checked_div(bank.total_deposits)
             .ok_or(ErrorCode::MathOverflow)?;
-        users_shares = bank.total_deposit_shares
+         users_shares = bank.total_deposit_shares
             .checked_mul(deposit_ratio)
             .ok_or(ErrorCode::MathOverflow)?;
     }
