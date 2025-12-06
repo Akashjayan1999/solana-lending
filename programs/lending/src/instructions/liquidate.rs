@@ -111,9 +111,10 @@ pub fn process_liquidate(ctx: Context<Liquidate>) -> Result<()> {
     }
 
     let transfer_to_bank = TransferChecked {
-        from: ctx.accounts.liquidator_collateral_token_account.to_account_info(),
-        mint: ctx.accounts.borrowed_mint.to_account_info(),
+        from: ctx.accounts.liquidator_borrowed_token_account.to_account_info(),
         to: ctx.accounts.borrowed_bank_token_account.to_account_info(),
+        mint: ctx.accounts.borrowed_mint.to_account_info(),
+        
         authority: ctx.accounts.liquidator.to_account_info(),
     };
 
@@ -125,6 +126,27 @@ pub fn process_liquidate(ctx: Context<Liquidate>) -> Result<()> {
 
     token_interface::transfer_checked(cpi_ctx_to_bank, liquidation_amount, decimals)?;
 
+    //Transfer liquidation value and bonus to liquidator
+    let liquidation_bonus = (liquidation_amount * collateral_bank.liquidation_bonus) + liquidation_amount;
+    
+    let transfer_to_liquidator = TransferChecked {
+        from: ctx.accounts.collateral_bank_token_account.to_account_info(),
+        mint: ctx.accounts.collateral_mint.to_account_info(),
+        to: ctx.accounts.liquidator_collateral_token_account.to_account_info(),
+        authority: ctx.accounts.collateral_bank_token_account.to_account_info(),
+    };
+
+    let mint_key = ctx.accounts.collateral_mint.key();
+    let signer_seeds: &[&[&[u8]]] = &[
+        &[
+            b"treasury",
+            mint_key.as_ref(),
+            &[ctx.bumps.collateral_bank_token_account],
+        ],
+    ];
+    let cpi_ctx_to_liquidator = CpiContext::new(cpi_program.clone(), transfer_to_liquidator).with_signer(signer_seeds);
+    let collateral_decimals = ctx.accounts.collateral_mint.decimals;   
+    token_interface::transfer_checked(cpi_ctx_to_liquidator, liquidation_bonus, collateral_decimals)?;
 
 
 
@@ -137,7 +159,7 @@ pub fn process_liquidate(ctx: Context<Liquidate>) -> Result<()> {
 
 
 
-
+    
 
 
 
