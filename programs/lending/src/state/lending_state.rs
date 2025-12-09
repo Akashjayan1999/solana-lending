@@ -23,7 +23,7 @@ pub struct User {
     pub borrowed_usdc: u64,
     /// User's borrowed shares in the USDC bank
     pub borrowed_usdc_shares: u64, 
-    /// USDC mint address
+    /// USDC mint address // used for checking if user is depositing USDC or SOL nothing else
     pub usdc_address: Pubkey,
     /// Current health factor of the user
     pub health_factor: u64,
