@@ -218,6 +218,47 @@ describe("Lending Smart Contract Tests", async () => {
     console.log("Deposit USDC", depositUSDC);
   });
 
+  it("Test Borrow", async () => {
+    const borrowSOL = await program.methods
+      .borrow(new BN(1))
+      .accounts({
+        signer: signer.publicKey,
+        mint: mintSOL,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        priceUpdate: solUsdPriceFeedAccount,
+      })
+      .rpc({ commitment: "confirmed" });
+
+    console.log("Borrow SOL", borrowSOL);
+  });
+
+
+  it("Test Repay", async () => {
+    const repaySOL = await program.methods
+      .repay(new BN(1))
+      .accounts({
+        signer: signer.publicKey,
+        mint: mintSOL,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc({ commitment: "confirmed" });
+
+    console.log("Repay SOL", repaySOL);
+  });
+
+  it("Test Withdraw", async () => {
+    const withdrawUSDC = await program.methods
+      .withdraw(new BN(100))
+      .accounts({
+        signer: signer.publicKey,
+        mint: mintUSDC,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc({ commitment: "confirmed" });
+
+    console.log("Withdraw USDC", withdrawUSDC);
+  });
+
 });
 
  
